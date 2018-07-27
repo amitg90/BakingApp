@@ -23,14 +23,19 @@ public class MainActivity extends Activity implements CustomGridItemClick {
         recipeAdapter = new RecipeAdapter(recyclerView, this, this, RecipeDb.recipeInfoArrayList);
         recyclerView = findViewById(R.id.rv_numbers);
         recyclerView.setAdapter(recipeAdapter);
+        gridLayoutManager = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_columns));
+
 //        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            gridLayoutManager = new GridLayoutManager(this,
-//                    1, GridLayoutManager.VERTICAL, false);
+//            Log.e("Amit!!", "Portrait View");
+//           // gridLayoutManager = new GridLayoutManager(this,
+//             //       1, GridLayoutManager.VERTICAL, false);
+//            gridLayoutManager = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_columns));
 //        } else {
+//            Log.e("Amit!!", "Landscape View");
 //            gridLayoutManager = new GridLayoutManager(this,
 //                    3, GridLayoutManager.VERTICAL, false);
 //        }
-//        recyclerView.setLayoutManager(gridLayoutManager);
+        recyclerView.setLayoutManager(gridLayoutManager);
     }
 
     @Override

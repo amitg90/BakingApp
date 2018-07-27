@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/fragment0"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:keepScreenOn="true"
+        android:layout_weight="1"
+        android:background="#512727">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/detail_rv_numbers"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginEnd="5dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:paddingStart="15dp"
+            android:layout_marginTop="66dp"
+            android:numColumns="auto_fit" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment1"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:keepScreenOn="true"
+        android:layout_weight="1"
+        android:background="#512727">
+
+        <com.google.android.exoplayer2.ui.SimpleExoPlayerView
+            android:id="@+id/playerView"
+            android:focusable="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/resolution_textView"
+            android:layout_marginTop="2dp" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment2"
+        android:background="@color/cardview_light_background"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="30dp">
+
+        <TextView
+            android:id="@+id/step_description"
+            android:textSize="20sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment3"
+        android:background="@color/cardview_shadow_start_color"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_marginBottom="10dp"
+        android:layout_height="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/previous"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:onClick="prevClick"
+                android:text="Previous"
+                />
+            <Button
+                android:id="@+id/next"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:onClick="nextClick"
+                android:text="Next"
+                />
+        </LinearLayout>
+
+    </FrameLayout>
+
+</LinearLayout>
