@@ -69,6 +69,8 @@ public class RecipeDetailFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_recipe_detail,
                 container, false);
 
+        Log.e("RecipeDetailFragment", "onCreateView called!!:");
+
         // Initialize the player view.
         mPlayerView = view.findViewById(R.id.playerView);
         stepDescrView = view.findViewById(R.id.step_description);
@@ -86,6 +88,7 @@ public class RecipeDetailFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = getArguments();
+        Log.e("RecipeDetailFragment", "onActivityCreated called!!:");
         if (bundle != null) {
             // Get the Intent that started this activity and extract the string
             step_id = bundle.getInt(StepDetailActivity.STEP_ID_STR, -1);
@@ -110,6 +113,8 @@ public class RecipeDetailFragment extends Fragment {
             } else {
                 Log.e("Amit", "NO Video URL Exist");
             }
+        } else {
+            Log.e("RecipeDetailFragment", "BUNDLE IS NULL!!:");
         }
     }
 
@@ -154,14 +159,16 @@ public class RecipeDetailFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e("RecipeDetailFragment", "onDestroy called");
-        mExoPlayer.release();
+        Log.e("RecipeDetailFragment", "!!!onDestroy called");
     }
 
     @Override
     public void onPause() {
         super.onPause();
         Log.e("RecipeDetailFragment", "onPause called");
-        mExoPlayer.stop();
+        if (mExoPlayer != null) {
+            mExoPlayer.release();
+            mExoPlayer = null;
+        }
     }
 }
