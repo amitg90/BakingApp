@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements CustomGridItemClick {
 
     @Override
     public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
-        // start receipe detail activity
+        // start recipe detail activity
         Intent intent = new Intent(this, RecipeDetail.class);
         intent.putExtra(RECIPE_INDEX_STR, position); //Optional parameters
         startActivity(intent);
