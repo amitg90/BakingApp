@@ -1,29 +1,31 @@
 package com.example.amit.bakingapp;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-public class RecipeDetail extends FragmentActivity implements CustomGridItemClick {
+public class RecipeDetail extends AppCompatActivity implements CustomGridItemClick {
 
     public RecipeDetailAdapter recipeDetailAdapter = null;
     public static RecyclerView recyclerView;
     public static RecipeListFragment recipeListFragment = null;
     public static RecipeDetailFragment recipeDetailFragment = null;
     public static IngredientFragment ingredientFragment = null;
+    public static RecipeInfo recipeInfo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_detail);
-
-        RecipeInfo recipeInfo;
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
@@ -35,6 +37,7 @@ public class RecipeDetail extends FragmentActivity implements CustomGridItemClic
         }
 
         recipeInfo = RecipeDb.recipeInfoArrayList.get(position);
+        setTitle(recipeInfo.name);
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
 
@@ -70,11 +73,63 @@ public class RecipeDetail extends FragmentActivity implements CustomGridItemClic
     }
 
     public void prevClick(View view) {
+        Log.e("Amit", "Previous clicked");
+        if (RecipeDetailFragment.step_id > 0) {
+            RecipeDetailFragment.step_id--;
+        }
 
+        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+       // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        // create list fragment instance
+        Bundle bundle = new Bundle();
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
+        bundle.putInt(StepDetailActivity.STEP_ID_STR, RecipeDetailFragment.step_id);
+
+        recipeDetailFragment = new RecipeDetailFragment();
+        recipeDetailFragment.setArguments(bundle);
+
+        // check if detail fragment needs to be intialized
+        if (getResources().getInteger(R.integer.size) == 2) {
+            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment);
+        } else {
+            fragmentTransaction.replace(R.id.fragmentContainer, recipeDetailFragment);
+        }
+
+        fragmentTransaction.commit();
     }
 
-    public void Click(View view) {
+    public void nextClick(View view) {
+        Log.e("Amit", "Next clicked:" + recipeInfo.steps.size());
+        if (RecipeDetailFragment.step_id < recipeInfo.steps.size()) {
+            RecipeDetailFragment.step_id++;
+        }
 
+        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+       // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        // create list fragment instance
+        Bundle bundle = new Bundle();
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
+        bundle.putInt(StepDetailActivity.STEP_ID_STR, RecipeDetailFragment.step_id);
+
+        recipeDetailFragment = new RecipeDetailFragment();
+        recipeDetailFragment.setArguments(bundle);
+
+        // check if detail fragment needs to be intialized
+        if (getResources().getInteger(R.integer.size) == 2) {
+            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment);
+        } else {
+            fragmentTransaction.replace(R.id.fragmentContainer, recipeDetailFragment);
+        }
+
+        fragmentTransaction.commit();
     }
 
     @Override
@@ -121,19 +176,5 @@ public class RecipeDetail extends FragmentActivity implements CustomGridItemClic
         fragmentTransaction.commit();
 
         Log.e("Amit", "Set Bundle Arguments!!:");
-
-//        // start activity
-//        if (position == 0) {
-//            // ingredient
-//            Intent intent = new Intent(this, IngredientActivity.class);
-//            intent.putExtra(MainActivity.RECIPE_INDEX_STR, position); //Optional parameters
-//            startActivity(intent);
-//        } else {
-//            // steps activity
-//            Intent intent = new Intent(this, StepDetailActivity.class);
-//            intent.putExtra(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id); //Optional parameters
-//            intent.putExtra(StepDetailActivity.STEP_ID_STR, (position - 1)); //Optional parameters
-//            startActivity(intent);
-//        }
     }
 }

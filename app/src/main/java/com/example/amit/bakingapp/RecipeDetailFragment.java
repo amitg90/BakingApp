@@ -32,8 +32,8 @@ public class RecipeDetailFragment extends Fragment {
     private TextView stepDescrView;
     public static String STEP_ID_STR = "step_id";
     public static String RECIPE_ID_STR = "recipe_id";
-    int step_id = -1;
-    int recipe_id = -1;
+    public static int step_id = -1;
+    public static int recipe_id = -1;
     RecipeInfo recipeInfo;
     Steps step;
     Context context = null;
@@ -94,6 +94,8 @@ public class RecipeDetailFragment extends Fragment {
             step_id = bundle.getInt(StepDetailActivity.STEP_ID_STR, -1);
             recipe_id = bundle.getInt(StepDetailActivity.RECIPE_ID_STR, -1);
 
+            Log.e("RecipeDetailFragment", "step_id !!:" + step_id);
+
             if (step_id == -1 || recipe_id == -1) {
                 Toast.makeText(context, "Invalid Position entered", Toast.LENGTH_LONG).show();
                 return;
@@ -104,7 +106,7 @@ public class RecipeDetailFragment extends Fragment {
             Log.e("Amit", "Step Info:" + step.shortDescription);
 
             if (stepDescrView != null)
-                stepDescrView.setText(step.shortDescription);
+                stepDescrView.setText(step.description);
 
             if (step.videoURL.isEmpty() == false) {
                 Log.e("Amit", "Video URL Exist");
@@ -115,44 +117,6 @@ public class RecipeDetailFragment extends Fragment {
             }
         } else {
             Log.e("RecipeDetailFragment", "BUNDLE IS NULL!!:");
-        }
-    }
-
-    public void prevClick(View view) {
-        Log.e("Amit", "Prev clicked");
-        if (step_id > 0) {
-            step_id--;
-            step = recipeInfo.steps.get(step_id);
-
-            if (stepDescrView != null)
-                stepDescrView.setText(step.shortDescription);
-
-            if (step.videoURL.isEmpty() == false) {
-                Log.e("Amit", "Video URL Exist");
-                // we have veodop URL
-                initializePlayer(Uri.parse(step.videoURL));
-            } else {
-                mExoPlayer.release();
-                mExoPlayer.clearVideoSurface();
-            }
-        }
-    }
-
-    public void nextClick(View view) {
-        Log.e("Amit", "Next clicked");
-        if (step_id < recipeInfo.steps.size()) {
-            step_id++;
-            step = recipeInfo.steps.get(step_id);
-
-            if (stepDescrView != null)
-                stepDescrView.setText(step.shortDescription);
-            if (step.videoURL.isEmpty() == false) {
-                Log.e("Amit", "Video URL Exist");
-                // we have veodop URL
-                initializePlayer(Uri.parse(step.videoURL));
-            } else {
-                Log.e("Amit", "NO Video URL Exist");
-            }
         }
     }
 
