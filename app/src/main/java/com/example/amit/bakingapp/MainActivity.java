@@ -16,6 +16,7 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
     public RecipeAdapter recipeAdapter = null;
     public static RecyclerView recyclerView;
     public static String RECIPE_INDEX_STR = "recipe_index";
+    public static String RECIPE_INGREDIENT_STR = "recipe_ingredients";
 
     public void postRecipeAsyncTaskDone() {
         GridLayoutManager gridLayoutManager;

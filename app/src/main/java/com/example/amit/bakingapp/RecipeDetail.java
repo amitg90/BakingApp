@@ -1,6 +1,9 @@
 package com.example.amit.bakingapp;
 
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -10,8 +13,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecipeDetail extends AppCompatActivity implements CustomGridItemClick {
 
@@ -21,6 +31,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static RecipeDetailFragment recipeDetailFragment = null;
     public static IngredientFragment ingredientFragment = null;
     public static RecipeInfo recipeInfo = null;
+    public static SharedPreferences mPrefs = null;
+    public static String SHARED_FILE = "com.example.amit.bakingapp";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,20 +41,22 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
-        int position = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
+        int recipe_id = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
 
-        if (position == -1) {
+        if (recipe_id == -1) {
             Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
             return;
         }
 
-        recipeInfo = RecipeDb.recipeInfoArrayList.get(position);
+        recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
         setTitle(recipeInfo.name);
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
 
         // create list fragment instance
         Bundle bundle = new Bundle();
+        Log.e("Amit", "Setting Recipe index:" + Integer.toString(recipeInfo.id));
+
         bundle.putInt(MainActivity.RECIPE_INDEX_STR, recipeInfo.id);
         recipeListFragment = new RecipeListFragment();
         recipeListFragment.setArguments(bundle);
@@ -176,5 +190,50 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         fragmentTransaction.commit();
 
         Log.e("Amit", "Set Bundle Arguments!!:");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        List<String> list = new ArrayList<String>();
+
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.add_to_widget:
+                // store current recipe ID in shared preference and then update widget
+                SharedPreferences sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                Gson gson = new Gson();
+
+                for (int i = 0; i< recipeInfo.ingredients.size();i++) {
+                    list.add(recipeInfo.ingredients.get(i).ingredient);
+                }
+
+                // This can be any object. Does not have to be an arraylist.
+                String json = gson.toJson(list);
+
+                editor.putString(MainActivity.RECIPE_INGREDIENT_STR, json);
+                editor.apply();
+
+                Log.e("RecipeWidgetFactory", "!!Trigger Updating Widgets:");
+
+                // trigger widget to refresh
+                updateWidgets();
+                return (true);
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void updateWidgets() {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, RecipeWidget.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.list_view);
     }
 }

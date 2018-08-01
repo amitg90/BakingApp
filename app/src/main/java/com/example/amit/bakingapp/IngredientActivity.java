@@ -23,14 +23,14 @@ public class IngredientActivity extends Activity {
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
-        int position = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
+        int recipe_id = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
 
-        if (position == -1) {
+        if (recipe_id == -1) {
             Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
             return;
         }
 
-        recipeInfo = RecipeDb.recipeInfoArrayList.get(position);
+        recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
         Log.e("Amit", "Detail Recipt triggered:" + recipeInfo.name);
 
         ingredientAdapter = new IngredientAdapter(recyclerView, this, recipeInfo.ingredients);

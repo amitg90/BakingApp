@@ -55,7 +55,7 @@ public class IngredientFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         RecipeInfo recipeInfo;
-        int position;
+        int recipe_id;
 
         Log.e("IngredientFragment", "onActivityCreated called");
 
@@ -63,14 +63,14 @@ public class IngredientFragment extends Fragment {
         if (bundle != null) {
             Log.e("IngredientFragment", "Bundle NOT Null");
 
-            position = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
+            recipe_id = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
 
-            if (position == -1) {
+            if (recipe_id == -1) {
                 Toast.makeText(context, "Invalid Position entered", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            recipeInfo = RecipeDb.recipeInfoArrayList.get(position);
+            recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
             Log.e("Amit", "Ingredient List triggered:" + recipeInfo.name);
 
             ingredientAdapter = new IngredientAdapter(recyclerView, context, recipeInfo.ingredients);

@@ -58,22 +58,22 @@ public class RecipeListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         RecipeInfo recipeInfo;
-        int position;
+        int recipe_id;
 
         Log.e("RecipeListFragment", "onActivityCreated called");
 
         // Get the Intent that started this activity and extract the string
         if (bundle != null) {
-            Log.e("RecipeListFragment", "Bundle NOT Null");
+            recipe_id = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
+            Log.e("RecipeListFragment", "Bundle NOT Null: Recipe ID:" + Integer.toString(recipe_id));
 
-            position = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
-
-            if (position == -1) {
-                Toast.makeText(context, "Invalid Position entered", Toast.LENGTH_LONG).show();
+            if (recipe_id == -1) {
+                Toast.makeText(context, "Invalid ID entered", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            recipeInfo = RecipeDb.recipeInfoArrayList.get(position);
+            // recipe ID starts from 1, array list position are 0 based
+            recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
             Log.e("Amit", "Detail Receipt triggered:" + recipeInfo.name);
 
             recipeDetailAdapter = new RecipeDetailAdapter(recyclerView, (CustomGridItemClick) context, context, recipeInfo);
