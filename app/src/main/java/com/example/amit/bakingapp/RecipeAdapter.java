@@ -41,7 +41,8 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                customGridItemClick.onItemClick(view, null, viewHolder.getAdapterPosition());
+                customGridItemClick.onItemClick(view, recipeList.get(viewHolder.getAdapterPosition()),
+                        viewHolder.getAdapterPosition());
             }
         });
 

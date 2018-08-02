@@ -157,7 +157,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         //create fragment instance
         Bundle bundle = new Bundle();
         if (position == 0) {
-            bundle.putInt(MainActivity.RECIPE_INDEX_STR, position);
+            bundle.putInt(MainActivity.RECIPE_INDEX_STR, recipeInfo.id);
 
             ingredientFragment = new IngredientFragment();
             ingredientFragment.setArguments(bundle);
@@ -205,6 +205,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.add_to_widget:
+
                 // store current recipe ID in shared preference and then update widget
                 SharedPreferences sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();

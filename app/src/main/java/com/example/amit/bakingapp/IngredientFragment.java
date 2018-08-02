@@ -61,9 +61,9 @@ public class IngredientFragment extends Fragment {
 
         // Get the Intent that started this activity and extract the string
         if (bundle != null) {
-            Log.e("IngredientFragment", "Bundle NOT Null");
-
             recipe_id = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
+
+            Log.e("IngredientFragment", "Bundle NOT Null" + Integer.toString(recipe_id));
 
             if (recipe_id == -1) {
                 Toast.makeText(context, "Invalid Position entered", Toast.LENGTH_LONG).show();

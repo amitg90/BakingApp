@@ -1,7 +1,11 @@
 package com.example.amit.bakingapp;
 
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,12 +15,57 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements CustomGridItemClick {
 
     public RecipeAdapter recipeAdapter = null;
     public static RecyclerView recyclerView;
     public static String RECIPE_INDEX_STR = "recipe_index";
     public static String RECIPE_INGREDIENT_STR = "recipe_ingredients";
+
+    public boolean sharedDataExist() {
+        SharedPreferences sharedPreferences = getSharedPreferences(RecipeDetail.SHARED_FILE, Context.MODE_PRIVATE);
+        String str = sharedPreferences.getString(MainActivity.RECIPE_INGREDIENT_STR, null);
+
+        if (str == null) {
+            return (false);
+        }
+
+        return (true);
+    }
+
+    public void updateWidgetDefault() {
+
+        if (sharedDataExist() == true) {
+            Log.e("updateWidgetDefault", "!!Default Exist:");
+            return;
+        }
+
+        RecipeInfo recipeInfo = RecipeDb.recipeInfoArrayList.get(0);
+        List<String> list = new ArrayList<String>();
+
+        // store current recipe ID in shared preference and then update widget
+        SharedPreferences sharedPreferences = getSharedPreferences(RecipeDetail.SHARED_FILE, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+
+        for (int i = 0; i< recipeInfo.ingredients.size();i++) {
+            list.add(recipeInfo.ingredients.get(i).ingredient);
+        }
+
+        // This can be any object. Does not have to be an arraylist.
+        String json = gson.toJson(list);
+
+        editor.putString(MainActivity.RECIPE_INGREDIENT_STR, json);
+        editor.apply();
+
+        Log.e("updateWidgetDefault", "!!Trigger Updating Widgets:");
+
+    }
 
     public void postRecipeAsyncTaskDone() {
         GridLayoutManager gridLayoutManager;
@@ -27,16 +76,9 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
         recyclerView.setAdapter(recipeAdapter);
         gridLayoutManager = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_columns));
 
-//        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-//            Log.e("Amit!!", "Portrait View");
-//           // gridLayoutManager = new GridLayoutManager(this,
-//             //       1, GridLayoutManager.VERTICAL, false);
-//            gridLayoutManager = new GridLayoutManager(this, getResources().getInteger(R.integer.grid_columns));
-//        } else {
-//            Log.e("Amit!!", "Landscape View");
-//            gridLayoutManager = new GridLayoutManager(this,
-//                    3, GridLayoutManager.VERTICAL, false);
-//        }
+        // update default widget if needed
+        updateWidgetDefault();
+
         recyclerView.setLayoutManager(gridLayoutManager);
     }
 
@@ -55,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
     public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
         // start recipe detail activity
         Intent intent = new Intent(this, RecipeDetail.class);
-        intent.putExtra(RECIPE_INDEX_STR, position); //Optional parameters
+        intent.putExtra(RECIPE_INDEX_STR, recipeInfo.id); //Optional parameters
         startActivity(intent);
     }
 }

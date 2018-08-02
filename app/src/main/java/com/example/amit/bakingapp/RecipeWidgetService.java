@@ -34,7 +34,7 @@ public class RecipeWidgetService extends RemoteViewsService {
 
         @Override
         public void onCreate() {
-
+            Log.e("RecipeWidgetFactory", "!!!onCreate called");
         }
 
         @Override
@@ -60,11 +60,11 @@ public class RecipeWidgetService extends RemoteViewsService {
         @Override
         public int getCount() {
             if (mList != null) {
-               // Log.e("RecipeWidgetFactory", "getCount called:" + Integer.toString(mList.length));
+                Log.e("RecipeWidgetFactory", "getCount called:" + Integer.toString(mList.length));
                 return mList.length;
             }
             else {
-              //  Log.e("RecipeWidgetFactory", "getCount called: 0");
+                Log.e("RecipeWidgetFactory", "getCount called: 0");
                 return 0;
             }
         }
