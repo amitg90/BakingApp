@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/add_to_widget"
-        android:icon="@drawable/example_appwidget_preview"
+        android:icon="@android:drawable/btn_star"
         android:title="Add to Widget"
         app:showAsAction="always"
         android:orderInCategory="0"/>
