@@ -40,11 +40,17 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
     public void updateWidgetDefault() {
 
         if (sharedDataExist() == true) {
-            Log.e("updateWidgetDefault", "!!Default Exist:");
+            Log.i("updateWidgetDefault", "!!Default Exist:");
+            return;
+        }
+
+        if (RecipeDb.recipeInfoArrayList.size() == 0) {
+            Log.e("updateWidgetDefault", "!!NO DATA AVAILABLE, Looks like No network connectivity");
             return;
         }
 
         RecipeInfo recipeInfo = RecipeDb.recipeInfoArrayList.get(0);
+
         List<String> list = new ArrayList<String>();
 
         // store current recipe ID in shared preference and then update widget
