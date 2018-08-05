@@ -1,5 +1,6 @@
 package com.example.amit.bakingapp;
 
+import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
@@ -13,13 +14,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 public class RecipeListFragment extends Fragment {
     Context context = null;
     public RecipeDetailAdapter recipeDetailAdapter = null;
     public static RecyclerView recyclerView;
     Bundle bundle = null;
+    public View layout_view = null;
+    public ImageView recipe_imageView = null;
+    public TextView  recipe_servings_tv = null;
 
     @Override
     public void onAttach(Context context) {
@@ -49,6 +58,9 @@ public class RecipeListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_recipe_list, container, false);
 
         recyclerView = view.findViewById(R.id.recipe_detail_rv_list);
+        layout_view = view.findViewById(R.id.recipe_layout_view);
+        recipe_imageView = view.findViewById(R.id.recipe_image_view);
+        recipe_servings_tv = view.findViewById(R.id.servings);
 
         return view;
     }
@@ -75,6 +87,52 @@ public class RecipeListFragment extends Fragment {
             // recipe ID starts from 1, array list position are 0 based
             recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
             Log.e("Amit", "Detail Receipt triggered:" + recipeInfo.name);
+
+            recipe_servings_tv.setText("Servings: " + Integer.toString(recipeInfo.servings));
+
+            // check if we have image to show
+            //recipeInfo.image = "https://www.pexels.com/photo/grey-and-white-short-fur-cat-104827/";
+            String default_image = "https://www.fnordware.com/superpng/pnggrad16rgb.png";
+            if (recipeInfo.image.isEmpty() == false) {
+                Log.e("Amit", "Loading Image:" + recipeInfo.image);
+                Picasso.with(context).load(recipeInfo.image).into(recipe_imageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e("Amit", "Loading Image: Success");
+                    }
+
+                    @Override
+                    public void onError() {
+                        Log.e("Amit", "Loading Image: Failed");
+                    }
+                });
+
+//                Picasso.Builder builder = new Picasso.Builder(context);
+//                builder.listener(new Picasso.Listener()
+//                {
+//                    @Override
+//                    public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
+//                    {
+//                        Log.e("Amit", "Loading Image: Failed");
+//                        exception.printStackTrace();
+//                    }
+//                });
+//                builder.build().load(recipeInfo.image).into(recipe_imageView);
+
+            } else {
+                Log.e("Amit", "Loading Default Image:" + recipeInfo.name);
+                Picasso.with(context).load(default_image).into(recipe_imageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e("Amit", "Loading Image: Success");
+                    }
+
+                    @Override
+                    public void onError() {
+                        Log.e("Amit", "Loading Image: Failed");
+                    }
+                });
+            }
 
             recipeDetailAdapter = new RecipeDetailAdapter(recyclerView, (CustomGridItemClick) context, context, recipeInfo);
             recyclerView.setAdapter(recipeDetailAdapter);

@@ -1,15 +1,18 @@
 package com.example.amit.bakingapp;
 
+import android.media.Image;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,11 +28,14 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 public class RecipeDetailFragment extends Fragment {
     private SimpleExoPlayer mExoPlayer;
     private SimpleExoPlayerView mPlayerView;
     private TextView stepDescrView;
+    private ImageView stepImageView;
     public static String STEP_ID_STR = "step_id";
     public static String RECIPE_ID_STR = "recipe_id";
     public static int step_id = -1;
@@ -74,6 +80,7 @@ public class RecipeDetailFragment extends Fragment {
         // Initialize the player view.
         mPlayerView = view.findViewById(R.id.playerView);
         stepDescrView = view.findViewById(R.id.step_description);
+        stepImageView = view.findViewById(R.id.recipe_step_image_view);
 
         return (view);
     }
@@ -105,8 +112,57 @@ public class RecipeDetailFragment extends Fragment {
             step = recipeInfo.steps.get(step_id);
             Log.e("Amit", "Step Info:" + step.shortDescription);
 
-            if (stepDescrView != null)
+            if (stepDescrView != null) {
                 stepDescrView.setText(step.description);
+                stepDescrView.setMovementMethod(new ScrollingMovementMethod());
+            }
+
+            if (stepImageView != null) {
+
+                String default_image = "https://www.fnordware.com/superpng/pnggrad16rgb.png";
+                if (step.thumbnailURL.isEmpty() == false) {
+                    Log.e("Amit", "Loading Image:" + step.thumbnailURL);
+                    Picasso.with(context).load(step.thumbnailURL).into(stepImageView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.e("Amit", "Loading Image: Success");
+                        }
+
+                        @Override
+                        public void onError() {
+                            Log.e("Amit", "Loading Image: Failed");
+                        }
+                    });
+
+    //                Picasso.Builder builder = new Picasso.Builder(context);
+    //                builder.listener(new Picasso.Listener()
+    //                {
+    //                    @Override
+    //                    public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
+    //                    {
+    //                        Log.e("Amit", "Loading Image: Failed");
+    //                        exception.printStackTrace();
+    //                    }
+    //                });
+    //                builder.build().load(recipeInfo.image).into(recipe_imageView);
+
+                } else {
+                    Log.e("Amit", "Loading Default Image:" + recipeInfo.name);
+                    Picasso.with(context).load(default_image).into(stepImageView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.e("Amit", "Loading Image: Success");
+                        }
+
+                        @Override
+                        public void onError() {
+                            Log.e("Amit", "Loading Image: Failed");
+                        }
+                    });
+                }
+
+            }
+
 
             if (step.videoURL.isEmpty() == false) {
                 Log.e("Amit", "Video URL Exist");
