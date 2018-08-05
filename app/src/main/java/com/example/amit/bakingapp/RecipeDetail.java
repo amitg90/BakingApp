@@ -2,6 +2,7 @@ package com.example.amit.bakingapp;
 
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -34,6 +35,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static RecipeInfo recipeInfo = null;
     public static SharedPreferences mPrefs = null;
     public static String SHARED_FILE = "com.example.amit.bakingapp";
+    public static String POSITION_STR = "position_id";
+    int position = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,11 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         fragmentTransaction.commit();
         Log.e("Amit", "Set Bundle Arguments!!:");
+
+        int position = get_position();
+        if (position != -1) {
+            onItemClick(null, recipeInfo, (position + 1));
+        }
     }
 
     @Override
@@ -91,10 +99,11 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         Log.e("Amit", "Previous clicked");
         if (RecipeDetailFragment.step_id > 0) {
             RecipeDetailFragment.step_id--;
+            store_position(RecipeDetailFragment.step_id);
         }
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
-       // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         // create list fragment instance
         Bundle bundle = new Bundle();
@@ -133,6 +142,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
         bundle.putInt(StepDetailActivity.STEP_ID_STR, RecipeDetailFragment.step_id);
+        store_position(RecipeDetailFragment.step_id);
 
         recipeDetailFragment = new RecipeDetailFragment();
         recipeDetailFragment.setArguments(bundle);
@@ -145,6 +155,28 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         }
 
         fragmentTransaction.commit();
+    }
+
+    public void store_position(int position) {
+
+        if (position == -1) {
+            return;
+        }
+        // store current recipe ID in shared preference and then update widget
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putInt(RecipeDetail.POSITION_STR, position);
+        Log.e("Amit!!!!!!!", "Storing Position:" + position);
+        editor.apply();
+    }
+
+    public int get_position() {
+        // store current recipe ID in shared preference and then update widget
+        SharedPreferences sharedPreferences = getSharedPreferences(RecipeDetail.SHARED_FILE, MODE_PRIVATE);
+        int position = sharedPreferences.getInt(RecipeDetail.POSITION_STR, -1);
+        Log.e("Amit!!!!!!!", "Got Position:" + position);
+        return position;
     }
 
     @Override
@@ -172,6 +204,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
             fragmentTransaction.commit();
             return;
         } else {
+            this.position = position;
+
             bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
             bundle.putInt(StepDetailActivity.STEP_ID_STR, (position - 1));
         }
@@ -237,5 +271,11 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(this, RecipeWidget.class));
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.list_view);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        store_position(this.position);
     }
 }
