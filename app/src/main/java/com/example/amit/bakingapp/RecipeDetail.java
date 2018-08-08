@@ -5,9 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -20,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +27,16 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public RecipeDetailAdapter recipeDetailAdapter = null;
     public static RecyclerView recyclerView;
     public static RecipeListFragment recipeListFragment = null;
-    public static RecipeDetailFragment recipeDetailFragment = null;
+    public static StepDetailFragment stepDetailFragment = null;
     public static IngredientFragment ingredientFragment = null;
     public static RecipeInfo recipeInfo = null;
     public static SharedPreferences mPrefs = null;
     public static String SHARED_FILE = "com.example.amit.bakingapp";
     public static String POSITION_STR = "position_id";
-    int position = -1;
+    public static String STEP_ID_POSITION_STR = "step_id";
+    public static String RECIPE_ID_STR = "recipe_id";
+
+    int current_step_id_position = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +59,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         // create list fragment instance
         Bundle bundle = new Bundle();
-        Log.e("Amit", "Setting Recipe index:" + Integer.toString(recipeInfo.id));
+        //Log.e("RecipeDetail", "Setting Recipe index:" + Integer.toString(recipeInfo.id));
 
         bundle.putInt(MainActivity.RECIPE_INDEX_STR, recipeInfo.id);
         recipeListFragment = new RecipeListFragment();
@@ -68,39 +68,49 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragmentContainer, recipeListFragment);
 
+        Log.e("RecipeDetail", "Mode:" + getResources().getInteger(R.integer.size));
+
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
             bundle = new Bundle();
-            bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
-            bundle.putInt(StepDetailActivity.STEP_ID_STR, 0);
+            bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+            bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, 0);
 
-            recipeDetailFragment = new RecipeDetailFragment();
-            recipeDetailFragment.setArguments(bundle);
-            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment);
+            stepDetailFragment = new StepDetailFragment();
+            stepDetailFragment.setArguments(bundle);
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment);
+            Log.e("RecipeDetail", "StepDetailFragment Trgigered:");
         }
 
         fragmentTransaction.commit();
-        Log.e("Amit", "Set Bundle Arguments!!:");
 
-        int position = get_position();
-        if (position != -1) {
-            onItemClick(null, recipeInfo, (position + 1));
+        int step_id_position = get_position();
+        Log.e("RecipeDetail", "onCreate: Got StepID Position!!:"+step_id_position + "Size:" + recipeInfo.steps.size());
+
+        if (step_id_position != -1) {
+            if ((step_id_position - 1) <= recipeInfo.steps.size()) {
+                Log.e("RecipeDetail", "Triggering onItemClick:");
+                onItemClick(null, recipeInfo, step_id_position);
+            } else {
+                Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
+            }
         }
+        store_position(-1);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         //outState.putParcelable("DETAIL_ACTIVITY_SAVED_LAYOUT_MANAGER", getLayoutManager().onSaveInstanceState());
-        Log.d("MovieApp", "!!!Saving Position:");
     }
 
     public void prevClick(View view) {
         Log.e("Amit", "Previous clicked");
-        if (RecipeDetailFragment.step_id > 0) {
-            RecipeDetailFragment.step_id--;
-            store_position(RecipeDetailFragment.step_id);
+        if (current_step_id_position > 1) {
+            current_step_id_position--;
         }
+
+        stepDetailFragment.lastPosition = 0;
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
         // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -110,64 +120,71 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-        bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
-        bundle.putInt(StepDetailActivity.STEP_ID_STR, RecipeDetailFragment.step_id);
+        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+        bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
+        Log.e("RecipeDetail", "Setting New Step ID: " + current_step_id_position);
 
-        recipeDetailFragment = new RecipeDetailFragment();
-        recipeDetailFragment.setArguments(bundle);
+        stepDetailFragment = new StepDetailFragment();
+        stepDetailFragment.setArguments(bundle);
 
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
-            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment);
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
         } else {
-            fragmentTransaction.replace(R.id.fragmentContainer, recipeDetailFragment);
+            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
         }
 
         fragmentTransaction.commit();
     }
 
     public void nextClick(View view) {
-        Log.e("Amit", "Next clicked:" + recipeInfo.steps.size());
-        if (RecipeDetailFragment.step_id < recipeInfo.steps.size()) {
-            RecipeDetailFragment.step_id++;
+        Log.e("RecipeDetail", "Next clicked:" + recipeInfo.name);
+        if ((current_step_id_position + 1) < recipeInfo.steps.size()) {
+            current_step_id_position++;
         }
 
+        StepDetailFragment.lastPosition = 0;
+
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
-       // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        // remove existing one
+        if (stepDetailFragment != null) {
+            FragmentTransaction trans = fragmentManager.beginTransaction();
+            //trans.remove(stepDetailFragment);
+            Log.e("RecipeDetail", "REMOVE OLD FRAGMENT!!");
+            trans.commitAllowingStateLoss();
+        }
 
         // create list fragment instance
         Bundle bundle = new Bundle();
 
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-        bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
-        bundle.putInt(StepDetailActivity.STEP_ID_STR, RecipeDetailFragment.step_id);
-        store_position(RecipeDetailFragment.step_id);
+        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+        bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
+        Log.e("RecipeDetail", "Next Clicked:-->New Step ID: " + current_step_id_position);
 
-        recipeDetailFragment = new RecipeDetailFragment();
-        recipeDetailFragment.setArguments(bundle);
+        stepDetailFragment = new StepDetailFragment();
+        stepDetailFragment.setArguments(bundle);
 
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
-            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment);
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
         } else {
-            fragmentTransaction.replace(R.id.fragmentContainer, recipeDetailFragment);
+            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
         }
 
         fragmentTransaction.commit();
     }
 
     public void store_position(int position) {
-
-        if (position == -1) {
-            return;
-        }
         // store current recipe ID in shared preference and then update widget
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         editor.putInt(RecipeDetail.POSITION_STR, position);
-        Log.e("Amit!!!!!!!", "Storing Position:" + position);
+        Log.e("RecipeDetail", "Storing Position:" + position);
         editor.apply();
     }
 
@@ -175,14 +192,14 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         // store current recipe ID in shared preference and then update widget
         SharedPreferences sharedPreferences = getSharedPreferences(RecipeDetail.SHARED_FILE, MODE_PRIVATE);
         int position = sharedPreferences.getInt(RecipeDetail.POSITION_STR, -1);
-        Log.e("Amit!!!!!!!", "Got Position:" + position);
+        Log.e("RecipeDetail", "Retriving Position:" + position);
         return position;
     }
 
     @Override
     public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
 
-        Log.e("Amit", "onItemClick called!!:");
+        Log.e("RecipeDetail", "onItemClick called!!:" + position);
 
         // start fragment
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
@@ -204,27 +221,26 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
             fragmentTransaction.commit();
             return;
         } else {
-            this.position = position;
+            current_step_id_position = position;
 
-            bundle.putInt(StepDetailActivity.RECIPE_ID_STR, recipeInfo.id);
-            bundle.putInt(StepDetailActivity.STEP_ID_STR, (position - 1));
+            bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+            bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, position);
+            Log.e("RecipeDetail", "Setting Step ID POSITION: " + position);
         }
 
-        recipeDetailFragment = new RecipeDetailFragment();
-        recipeDetailFragment.setArguments(bundle);
+        stepDetailFragment = new StepDetailFragment();
+        stepDetailFragment.setArguments(bundle);
 
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
-            fragmentTransaction.replace(R.id.fragmentContainer1, recipeDetailFragment).addToBackStack(null);
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
         } else {
-            fragmentTransaction.replace(R.id.fragmentContainer, recipeDetailFragment).addToBackStack(null);
+            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
         }
 
         fragmentTransaction.commit();
-
-        Log.e("Amit", "Set Bundle Arguments!!:");
     }
 
     @Override
@@ -276,6 +292,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        store_position(this.position);
+        Log.e("RecipeDetail", "!!onDestroy: Trigger Storing  Step Position:");
+        store_position(current_step_id_position);
     }
 }

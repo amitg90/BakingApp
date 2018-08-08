@@ -13,7 +13,7 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.amit.bakingapp.RecipeDetailFragment.recipe_id;
+import static com.example.amit.bakingapp.StepDetailFragment.recipe_id;
 
 public class RecipeWidgetService extends RemoteViewsService {
     String[] mList = null;

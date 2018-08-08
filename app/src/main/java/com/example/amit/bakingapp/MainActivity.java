@@ -74,6 +74,16 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
 
     public void postRecipeAsyncTaskDone() {
         GridLayoutManager gridLayoutManager;
+        RecipeInfo recipeInfo;
+
+        for (int i = 0; i < RecipeDb.recipeInfoArrayList.size(); i++) {
+            Log.e("MainActivity", RecipeDb.recipeInfoArrayList.get(i).name);
+            recipeInfo = RecipeDb.recipeInfoArrayList.get(i);
+
+            for (int j = 0; j < recipeInfo.steps.size(); j++) {
+                Log.e("MainActivity", " " + recipeInfo.steps.get(j).description);
+            }
+        }
 
         Log.e("Amit", "postRecipeAsyncTaskDone called " + String.valueOf(RecipeDb.recipeInfoArrayList.size()));
         recipeAdapter = new RecipeAdapter(recyclerView, this, this, RecipeDb.recipeInfoArrayList);

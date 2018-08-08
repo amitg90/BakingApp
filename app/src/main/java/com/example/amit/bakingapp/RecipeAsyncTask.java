@@ -54,6 +54,8 @@ public class RecipeAsyncTask extends AsyncTask<RecipeInfo, Void,Void> {
                 String stepsStr = jArray.getJSONObject(i).getString("steps");
                 JSONArray steps = new JSONArray(stepsStr);
 
+                //Log.e("RecipeAsyncTask",  recipeInfo.name);
+
                 for (int j=0;j<steps.length();j++){
                     inputSteps = new Steps();
                     JSONObject obj1 = steps.getJSONObject(j);
@@ -63,6 +65,7 @@ public class RecipeAsyncTask extends AsyncTask<RecipeInfo, Void,Void> {
                     inputSteps.thumbnailURL = obj1.getString("thumbnailURL");
                     inputSteps.videoURL = obj1.getString("videoURL");
                     recipeInfo.steps.add(inputSteps);
+                    //Log.e("RecipeAsyncTask",  "Adding:" + inputSteps.description);
                 }
                 RecipeDb.recipeInfoArrayList.add(recipeInfo);
             }
