@@ -98,8 +98,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
                 Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
             }
         }
-        current_step_id_position = -1;
-        store_position();
+        //current_step_id_position = -1;
+        //store_position();
     }
 
     @Override
