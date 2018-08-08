@@ -178,7 +178,8 @@ public class StepDetailFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //Log.e("RecipeDetailFragment", "!!!onDestroy called");
+        Log.e("RecipeDetailFragment", "!!!onDestroy called");
+        RecipeDetail.store_position();
     }
 
     @Override

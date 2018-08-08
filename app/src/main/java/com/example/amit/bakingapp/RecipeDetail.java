@@ -35,8 +35,9 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static String POSITION_STR = "position_id";
     public static String STEP_ID_POSITION_STR = "step_id";
     public static String RECIPE_ID_STR = "recipe_id";
+    public static SharedPreferences sharedPreferences = null;
 
-    int current_step_id_position = 0;
+    public static int current_step_id_position = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +52,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
             Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
             return;
         }
+
+        sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
 
         recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
         setTitle(recipeInfo.name);
@@ -85,7 +88,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         fragmentTransaction.commit();
 
         int step_id_position = get_position();
-        Log.e("RecipeDetail", "onCreate: Got StepID Position!!:"+step_id_position + "Size:" + recipeInfo.steps.size());
+        Log.e("RecipeDetail", "onCreate: Got StepID Position!!:"+step_id_position + " Size:" + recipeInfo.steps.size());
 
         if (step_id_position != -1) {
             if ((step_id_position - 1) <= recipeInfo.steps.size()) {
@@ -95,7 +98,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
                 Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
             }
         }
-        store_position(-1);
+        current_step_id_position = -1;
+        store_position();
     }
 
     @Override
@@ -178,14 +182,14 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         fragmentTransaction.commit();
     }
 
-    public void store_position(int position) {
+    public static void store_position() {
         // store current recipe ID in shared preference and then update widget
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.putInt(RecipeDetail.POSITION_STR, position);
-        Log.e("RecipeDetail", "Storing Position:" + position);
-        editor.apply();
+        if (sharedPreferences != null) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(RecipeDetail.POSITION_STR, current_step_id_position);
+            Log.e("RecipeDetail", "Storing Position:" + current_step_id_position);
+            editor.apply();
+        }
     }
 
     public int get_position() {
@@ -292,7 +296,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.e("RecipeDetail", "!!onDestroy: Trigger Storing  Step Position:");
-        store_position(current_step_id_position);
+        //Log.e("RecipeDetail", "!!onDestroy: Trigger Storing  Step Position:");
+        //store_position(current_step_id_position);
     }
 }
