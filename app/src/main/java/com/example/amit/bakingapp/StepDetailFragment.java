@@ -1,5 +1,6 @@
 package com.example.amit.bakingapp;
 
+import android.content.res.Configuration;
 import android.media.Image;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -33,7 +34,7 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 public class StepDetailFragment extends Fragment {
-    private SimpleExoPlayer mExoPlayer;
+    public static SimpleExoPlayer mExoPlayer = null;
     private SimpleExoPlayerView mPlayerView;
     private TextView stepDescrView;
     private ImageView stepImageView;
@@ -43,7 +44,7 @@ public class StepDetailFragment extends Fragment {
     RecipeInfo recipeInfo;
     Steps step;
     Context context = null;
-    public static long lastPosition = 0;
+    public static long lastPlayerPosition = 0;
 
     /**
      * Initialize ExoPlayer.
@@ -67,8 +68,8 @@ public class StepDetailFragment extends Fragment {
         MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
                 context, userAgent), new DefaultExtractorsFactory(), null, null);
         mExoPlayer.prepare(mediaSource);
-        //mExoPlayer.seekTo(lastPosition);
-       // Log.e("RecipeDetailFragment", "Last Position:" + lastPosition);
+        mExoPlayer.seekTo(lastPlayerPosition);
+        Log.e("RecipeDetailFragment", "Last Position:" + lastPlayerPosition);
         mExoPlayer.setPlayWhenReady(true);
     }
 
@@ -100,10 +101,12 @@ public class StepDetailFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = getArguments();
         Log.e("RecipeDetailFragment", "onActivityCreated called!!:");
+
         if (bundle != null) {
             // Get the Intent that started this activity and extract the string
             recipe_id = bundle.getInt(RecipeDetail.RECIPE_ID_STR, -1);
             step_id_position = bundle.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
+            lastPlayerPosition = bundle.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
 
             Log.e("RecipeDetailFragment", "GOT step_id_position !!:" + step_id_position);
 
@@ -159,8 +162,8 @@ public class StepDetailFragment extends Fragment {
             }
 
             if (savedInstanceState != null) {
-                //lastPosition = savedInstanceState.getLong("lastPlayerPosition");
-               // Log.e("RecipeDetailFragment", "Got Last Position:" + lastPosition);
+                //lastPlayerPosition = savedInstanceState.getLong("lastPlayerPosition");
+                //Log.e("RecipeDetailFragment", "Got Last Position:" + lastPlayerPosition);
             }
 
             if (step.videoURL.isEmpty() == false) {
@@ -210,7 +213,7 @@ public class StepDetailFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mExoPlayer != null) {
-            outState.putLong("lastPlayerPosition", mExoPlayer.getCurrentPosition());
+            //outState.putLong("lastPlayerPosition", mExoPlayer.getCurrentPosition());
             //Log.e("RecipeDetailFragment", "SET Last Position:" + mExoPlayer.getCurrentPosition());
         }
     }

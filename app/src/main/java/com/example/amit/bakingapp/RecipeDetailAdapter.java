@@ -39,7 +39,7 @@ public class RecipeDetailAdapter extends RecyclerView.Adapter<RecipeDetailAdapte
             @Override
             public void onClick(View view) {
                 Log.e("RecipeDetailAdapter", "Adapter Sending position:" + viewHolder.getAdapterPosition());
-                customGridItemClick.onItemClick(view, recipeInfo, viewHolder.getAdapterPosition());
+                customGridItemClick.onItemClick(view, recipeInfo, viewHolder.getAdapterPosition(), 0);
             }
         });
 

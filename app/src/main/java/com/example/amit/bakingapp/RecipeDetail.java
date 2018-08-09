@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -34,30 +35,15 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static String SHARED_FILE = "com.example.amit.bakingapp";
     public static String POSITION_STR = "position_id";
     public static String STEP_ID_POSITION_STR = "step_id";
+    public static String LAST_PLAYER_POSITION_STR = "lastPlayerPosition";
     public static String RECIPE_ID_STR = "recipe_id";
     public static SharedPreferences sharedPreferences = null;
+    public static int orientation_state;
+    public static long lastPlayerPosition = 0;
 
     public static int current_step_id_position = 0;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recipe_detail);
-
-        // Get the Intent that started this activity and extract the string
-        Intent intent = getIntent();
-        int recipe_id = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
-
-        if (recipe_id == -1) {
-            Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
-
-        recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
-        setTitle(recipeInfo.name);
-
+    public void handleFragments() {
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
 
         // create list fragment instance
@@ -71,13 +57,19 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragmentContainer, recipeListFragment);
 
-        Log.e("RecipeDetail", "Mode:" + getResources().getInteger(R.integer.size));
+        Log.e("RecipeDetail", "!!!!!---Mode:" + getResources().getInteger(R.integer.size));
 
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
             bundle = new Bundle();
             bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
             bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, 0);
+            long lastPlayerPosition = 0;
+            if (StepDetailFragment.mExoPlayer != null) {
+                lastPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
+            }
+            bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
+            Log.e("lastPlayerPosition", "handleFragment lastPlayerPosition:" + lastPlayerPosition);
 
             stepDetailFragment = new StepDetailFragment();
             stepDetailFragment.setArguments(bundle);
@@ -93,11 +85,48 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         if (step_id_position != -1) {
             if ((step_id_position - 1) <= recipeInfo.steps.size()) {
                 Log.e("RecipeDetail", "Triggering onItemClick:");
-                onItemClick(null, recipeInfo, step_id_position);
+                //onItemClick(null, recipeInfo, step_id_position, lastPlayerPosition);
             } else {
                 Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
             }
         }
+
+        current_step_id_position = -1;
+        store_position();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_recipe_detail);
+
+        int orientation_state = getResources().getConfiguration().orientation;
+        Log.e("Sequence","onCreate Called!!!");
+
+//        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE){
+//            Log.e("onConfigurationChanged","Landscape !!!");
+//            c =
+//        }
+//        else {
+//            Log.e("onConfigurationChanged","Portrait !!!");
+//        }
+
+        // Get the Intent that started this activity and extract the string
+        Intent intent = getIntent();
+        int recipe_id = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
+
+        if (recipe_id == -1) {
+            Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
+
+        recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
+        setTitle(recipeInfo.name);
+
+        handleFragments();
+
         //current_step_id_position = -1;
         //store_position();
     }
@@ -114,7 +143,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
             current_step_id_position--;
         }
 
-        stepDetailFragment.lastPosition = 0;
+        stepDetailFragment.lastPlayerPosition = 0;
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
         // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -126,6 +155,11 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
         bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
+
+        long lastPlayerPosition = 0;
+        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
+        Log.e("lastPlayerPosition", "prevClick lastPlayerPosition:" + lastPlayerPosition);
+
         Log.e("RecipeDetail", "Setting New Step ID: " + current_step_id_position);
 
         stepDetailFragment = new StepDetailFragment();
@@ -141,13 +175,39 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         fragmentTransaction.commit();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        long currentPlayerPosition = 0;
+
+        Log.e("Sequence","onConfigurationChanged Called!!!");
+
+        int currentOrientation = getResources().getConfiguration().orientation;
+
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE){
+            Log.e("onConfigurationChanged","Landscape !!!");
+
+        }
+        else {
+            Log.e("onConfigurationChanged","Portrait !!!");
+        }
+
+        if (StepDetailFragment.mExoPlayer != null) {
+            Log.e("lastPlayerPosition", "Current Position:" + Long.toString(StepDetailFragment.mExoPlayer.getCurrentPosition()));
+            currentPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
+        }
+
+        //handleFragments();
+        onItemClick(null, recipeInfo, current_step_id_position, currentPlayerPosition);
+    }
+
     public void nextClick(View view) {
         Log.e("RecipeDetail", "Next clicked:" + recipeInfo.name);
         if ((current_step_id_position + 1) < recipeInfo.steps.size()) {
             current_step_id_position++;
         }
 
-        StepDetailFragment.lastPosition = 0;
+        StepDetailFragment.lastPlayerPosition = 0;
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
         fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -168,6 +228,10 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
         bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
         Log.e("RecipeDetail", "Next Clicked:-->New Step ID: " + current_step_id_position);
+
+        long lastPlayerPosition = 0;
+        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
+        Log.e("lastPlayerPosition", "nextClick lastPlayerPosition:" + lastPlayerPosition);
 
         stepDetailFragment = new StepDetailFragment();
         stepDetailFragment.setArguments(bundle);
@@ -201,7 +265,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     }
 
     @Override
-    public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
+    public void onItemClick(View view, RecipeInfo recipeInfo, int position, long lastPlayerPosition) {
 
         Log.e("RecipeDetail", "onItemClick called!!:" + position);
 
@@ -230,6 +294,8 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
             bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
             bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, position);
             Log.e("RecipeDetail", "Setting Step ID POSITION: " + position);
+            bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
+            Log.e("lastPlayerPosition", "onItemClick lastPlayerPosition:" + lastPlayerPosition);
         }
 
         stepDetailFragment = new StepDetailFragment();

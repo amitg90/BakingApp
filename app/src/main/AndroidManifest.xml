@@ -18,7 +18,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RecipeDetail" />
+        <activity android:name=".RecipeDetail"
+            android:configChanges="orientation|keyboardHidden"
+            />
         <activity android:name=".IngredientActivity" />
 
         <receiver android:name=".RecipeWidget">
