@@ -38,8 +38,6 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static String LAST_PLAYER_POSITION_STR = "lastPlayerPosition";
     public static String RECIPE_ID_STR = "recipe_id";
     public static SharedPreferences sharedPreferences = null;
-    public static int orientation_state;
-    public static long lastPlayerPosition = 0;
 
     public static int current_step_id_position = 0;
 
