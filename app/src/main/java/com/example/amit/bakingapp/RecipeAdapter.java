@@ -41,6 +41,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                RecipeDetail.current_step_id_position = -1;
                 customGridItemClick.onItemClick(view, recipeList.get(viewHolder.getAdapterPosition()),
                         viewHolder.getAdapterPosition(), 0);
             }
@@ -60,7 +61,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.ViewHolder
 
     @Override
     public int getItemCount() {
-        Log.e("RecipeAdapter", "!!Count:" + Integer.toString(recipeList.size()));
         return recipeList.size();
     }
 

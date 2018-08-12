@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.amit.bakingapp">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:icon="@mipmap/ic_launcher"
         android:label="BakingApp"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -19,9 +21,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".RecipeDetail"
-            android:configChanges="orientation|keyboardHidden"
-            />
-        <activity android:name=".IngredientActivity" />
+            android:configChanges="orientation|screenSize"/>
 
         <receiver android:name=".RecipeWidget">
             <intent-filter>

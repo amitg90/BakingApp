@@ -1,11 +1,7 @@
 package com.example.amit.bakingapp;
 
-import android.content.res.Configuration;
-import android.media.Image;
-import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -45,6 +41,7 @@ public class StepDetailFragment extends Fragment {
     Steps step;
     Context context = null;
     public static long lastPlayerPosition = 0;
+    public int step_id_position = -1;
 
     /**
      * Initialize ExoPlayer.
@@ -52,7 +49,7 @@ public class StepDetailFragment extends Fragment {
      */
     private void initializePlayer(Uri mediaUri) {
         if (mExoPlayer == null) {
-            Log.e("Amit", "initializePlayer: mExoPlayer NULL\n");
+            Log.e("StepDetailFragment", "initializePlayer: mExoPlayer\n");
 
             // Create an instance of the ExoPlayer.
             TrackSelector trackSelector = new DefaultTrackSelector();
@@ -69,7 +66,7 @@ public class StepDetailFragment extends Fragment {
                 context, userAgent), new DefaultExtractorsFactory(), null, null);
         mExoPlayer.prepare(mediaSource);
         mExoPlayer.seekTo(lastPlayerPosition);
-        Log.e("RecipeDetailFragment", "Last Position:" + lastPlayerPosition);
+        Log.e("StepDetailFragment", "Last Position:" + lastPlayerPosition);
         mExoPlayer.setPlayWhenReady(true);
     }
 
@@ -79,12 +76,19 @@ public class StepDetailFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_recipe_detail,
                 container, false);
 
-        Log.e("RecipeDetailFragment", "onCreateView called!!:");
+        Log.e("StepDetailFragment", "onCreateView called!!:");
 
         // Initialize the player view.
         mPlayerView = view.findViewById(R.id.playerView);
         stepDescrView = view.findViewById(R.id.step_description);
         stepImageView = view.findViewById(R.id.recipe_step_image_view);
+
+        if (stepDescrView != null) {
+            Log.e("StepDetailFragment", "stepDescrView NOT NULL!!:");
+        } else {
+            Log.e("StepDetailFragment", "stepDescrView is NULL!!:");
+        }
+
 
         return (view);
     }
@@ -95,21 +99,24 @@ public class StepDetailFragment extends Fragment {
         this.context = context;
     }
 
+    public void getDataFromBundle(Bundle bundle) {
+        // Get the Intent that started this activity and extract the string
+        recipe_id = bundle.getInt(RecipeDetail.RECIPE_ID_STR, -1);
+        step_id_position = bundle.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
+        lastPlayerPosition = bundle.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+    }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        int step_id_position = -1;
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = getArguments();
-        Log.e("RecipeDetailFragment", "onActivityCreated called!!:");
+        Log.e("StepDetailFragment", "onActivityCreated called!!:");
 
         if (bundle != null) {
-            // Get the Intent that started this activity and extract the string
-            recipe_id = bundle.getInt(RecipeDetail.RECIPE_ID_STR, -1);
-            step_id_position = bundle.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
-            lastPlayerPosition = bundle.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
 
-            Log.e("RecipeDetailFragment", "GOT step_id_position !!:" + step_id_position);
+            getDataFromBundle(bundle);
 
+            Log.e("StepDetailFragment", "Bundle returned step_id_position: !!:" + step_id_position);
             if (step_id_position == -1 || recipe_id == -1) {
                 Toast.makeText(context, "Invalid Position entered", Toast.LENGTH_LONG).show();
                 return;
@@ -117,11 +124,12 @@ public class StepDetailFragment extends Fragment {
 
             recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
 
-            if (step_id_position > recipeInfo.steps.size()) {
+            if (step_id_position > recipeInfo.steps.size() ||
+                    step_id_position < 1) {
                 return;
             }
-            step = recipeInfo.steps.get(step_id_position);
-            Log.e("RecipeDetailFragment", "Step Info:" + step.shortDescription + ":" + step.description);
+            step = recipeInfo.steps.get((step_id_position -1));
+            Log.e("StepDetailFragment", "Step Info:" + step.shortDescription + ":" + step.description);
 
             if (stepDescrView != null) {
                 stepDescrView.setText(step.description);
@@ -132,70 +140,87 @@ public class StepDetailFragment extends Fragment {
 
                 String default_image = "https://www.fnordware.com/superpng/pnggrad16rgb.png";
                 if (step.thumbnailURL.isEmpty() == false) {
-                    Log.e("StepDetailFragment", "Loading Image:" + step.thumbnailURL);
+                   // Log.e("StepDetailFragment", "Loading Image:" + step.thumbnailURL);
                     Picasso.with(context).load(step.thumbnailURL).into(stepImageView, new Callback() {
                         @Override
                         public void onSuccess() {
-                            Log.e("Amit", "Loading Image: Success");
+                            //Log.e("Amit", "Loading Image: Success");
                         }
 
                         @Override
                         public void onError() {
-                            Log.e("Amit", "Loading Image: Failed");
+                            Log.e("StepDetailFragment", "Loading Image: Failed");
                         }
                     });
                 } else {
-                    Log.e("Amit", "Loading Default Image:" + recipeInfo.name);
+                    //Log.e("StepDetailFragment", "Loading Default Image:" + recipeInfo.name);
                     Picasso.with(context).load(default_image).into(stepImageView, new Callback() {
                         @Override
                         public void onSuccess() {
-                            Log.e("Amit", "Loading Image: Success");
+                           // Log.e("Amit", "Loading Image: Success");
                         }
 
                         @Override
                         public void onError() {
-                            Log.e("Amit", "Loading Image: Failed");
+                            Log.e("StepDetailFragment", "Loading Image: Failed");
                         }
                     });
                 }
 
             }
 
-            if (savedInstanceState != null) {
-                //lastPlayerPosition = savedInstanceState.getLong("lastPlayerPosition");
-                //Log.e("RecipeDetailFragment", "Got Last Position:" + lastPlayerPosition);
-            }
-
             if (step.videoURL.isEmpty() == false) {
-                Log.e("Amit", "Video URL Exist");
+                Log.e("StepDetailFragment", "Initializing Player for step");
                 // we have veodop URL
                 initializePlayer(Uri.parse(step.videoURL));
             } else {
-                Log.e("Amit", "NO Video URL Exist");
+                Log.e("StepDetailFragment", "NO Video to show");
             }
         } else {
-            Log.e("RecipeDetailFragment", "BUNDLE IS NULL!!:");
+            Log.e("StepDetailFragment", "NO BUNDLE!!:");
         }
+
+       // saveFragmentInfoInSharedMemory(true);
     }
+
+//    public void saveFragmentInfoInSharedMemory(boolean defaults) {
+//        if (sharedPreferences != null) {
+//            if (defaults == true) {
+//                Log.e("StepDetailFragment", "Saving DEFAULT State in Shared Memory");
+//                SharedPreferences.Editor editor = sharedPreferences.edit();
+//                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
+//                editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+//                editor.putInt(RecipeDetail.RECIPE_ID_STR, -1);
+//                editor.apply();
+//            } else {
+//                Log.e("StepDetailFragment", "Saving Current State in Shared Memory");
+//                SharedPreferences.Editor editor = sharedPreferences.edit();
+//                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, (step_id_position + 1));
+//                editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
+//                editor.putInt(RecipeDetail.RECIPE_ID_STR, recipe_id);
+//                editor.apply();
+//            }
+//        }
+//    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e("RecipeDetailFragment", "!!!onDestroy called");
-        RecipeDetail.store_position();
+        Log.e("StepDetailFragment", "!!!onDestroy called");
+        releasePlayer();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        //Log.e("RecipeDetailFragment", "onPause called");
-        if (mExoPlayer != null)
-            mExoPlayer.stop();
+        Log.e("StepDetailFragment", "onPause called");
+        releasePlayer();
     }
 
-    public void releasePlayer() {
+    public static void releasePlayer() {
         if (mExoPlayer != null) {
-            Log.e("RecipeDetailFragment", "RELEASING PLAYER");
+            Log.e("StepDetailFragment", "RELEASING PLAYER");
+            lastPlayerPosition = mExoPlayer.getCurrentPosition();
             mExoPlayer.stop();
             mExoPlayer.release();
             mExoPlayer = null;
@@ -204,24 +229,16 @@ public class StepDetailFragment extends Fragment {
 
     @Override
     public void onStop() {
-        //Log.e("RecipeDetailFragment", "onStop called");
+        Log.e("StepDetailFragment", "onStop called");
         super.onStop();
         releasePlayer();
     }
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (mExoPlayer != null) {
-            //outState.putLong("lastPlayerPosition", mExoPlayer.getCurrentPosition());
-            //Log.e("RecipeDetailFragment", "SET Last Position:" + mExoPlayer.getCurrentPosition());
-        }
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        Log.e("RecipeDetailFragment", "onResume called");
+        Log.e("StepDetailFragment", "onResume called");
+
         if (step != null) {
             if (step.videoURL.isEmpty() == false) {
                 Log.e("Amit", "Video URL Exist");

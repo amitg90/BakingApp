@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
 
     public RecipeAdapter recipeAdapter = null;
     public static RecyclerView recyclerView;
-    public static String RECIPE_INDEX_STR = "recipe_index";
     public static String RECIPE_INGREDIENT_STR = "recipe_ingredients";
 
     public boolean sharedDataExist() {
@@ -81,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
             recipeInfo = RecipeDb.recipeInfoArrayList.get(i);
 
             for (int j = 0; j < recipeInfo.steps.size(); j++) {
-                Log.e("MainActivity", " " + recipeInfo.steps.get(j).description);
+                //Log.e("MainActivity", " " + recipeInfo.steps.get(j).description);
             }
         }
 
@@ -112,7 +111,9 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
     public void onItemClick(View view, RecipeInfo recipeInfo, int position, long lastPlayerPosition) {
         // start recipe detail activity
         Intent intent = new Intent(this, RecipeDetail.class);
-        intent.putExtra(RECIPE_INDEX_STR, recipeInfo.id); //Optional parameters
+        intent.putExtra(RecipeDetail.RECIPE_ID_STR, recipeInfo.id); //Optional parameters
+        intent.putExtra(RecipeDetail.STEP_ID_POSITION_STR, 0); //Optional parameters
+        Log.e("RecipeDetail", "Bundle Write position = 0");
         startActivity(intent);
     }
 }

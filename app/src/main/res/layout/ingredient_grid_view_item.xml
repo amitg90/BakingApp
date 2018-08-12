@@ -13,6 +13,6 @@
         android:layout_height="120dp"
         android:textSize="30dp"
         android:gravity="center"
-        android:contentDescription="Text View"
+        android:contentDescription="Testing"
         />
 </RelativeLayout>

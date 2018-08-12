@@ -39,6 +39,8 @@ public class RecipeDetailAdapter extends RecyclerView.Adapter<RecipeDetailAdapte
             @Override
             public void onClick(View view) {
                 Log.e("RecipeDetailAdapter", "Adapter Sending position:" + viewHolder.getAdapterPosition());
+                Log.e("RecipeAdapter", "lastPlayerPosition set to 0");
+                RecipeDetail.restored_lastPlayerPosition = 0;
                 customGridItemClick.onItemClick(view, recipeInfo, viewHolder.getAdapterPosition(), 0);
             }
         });

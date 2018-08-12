@@ -76,7 +76,7 @@ public class RecipeListFragment extends Fragment {
 
         // Get the Intent that started this activity and extract the string
         if (bundle != null) {
-            recipe_id = bundle.getInt(MainActivity.RECIPE_INDEX_STR, -1);
+            recipe_id = bundle.getInt(RecipeDetail.RECIPE_ID_STR, -1);
             Log.e("RecipeListFragment", "Bundle NOT Null: Recipe ID:" + Integer.toString(recipe_id));
 
             if (recipe_id == -1) {
@@ -91,7 +91,6 @@ public class RecipeListFragment extends Fragment {
             recipe_servings_tv.setText("Servings: " + Integer.toString(recipeInfo.servings));
 
             // check if we have image to show
-            //recipeInfo.image = "https://www.pexels.com/photo/grey-and-white-short-fur-cat-104827/";
             String default_image = "https://www.fnordware.com/superpng/pnggrad16rgb.png";
             if (recipeInfo.image.isEmpty() == false) {
                 Log.e("Amit", "Loading Image:" + recipeInfo.image);
@@ -106,19 +105,6 @@ public class RecipeListFragment extends Fragment {
                         Log.e("Amit", "Loading Image: Failed");
                     }
                 });
-
-//                Picasso.Builder builder = new Picasso.Builder(context);
-//                builder.listener(new Picasso.Listener()
-//                {
-//                    @Override
-//                    public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
-//                    {
-//                        Log.e("Amit", "Loading Image: Failed");
-//                        exception.printStackTrace();
-//                    }
-//                });
-//                builder.build().load(recipeInfo.image).into(recipe_imageView);
-
             } else {
                 Log.e("Amit", "Loading Default Image:" + recipeInfo.name);
                 Picasso.with(context).load(default_image).into(recipe_imageView, new Callback() {

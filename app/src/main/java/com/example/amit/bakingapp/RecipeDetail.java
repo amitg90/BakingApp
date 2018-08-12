@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -33,64 +35,36 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static RecipeInfo recipeInfo = null;
     public static SharedPreferences mPrefs = null;
     public static String SHARED_FILE = "com.example.amit.bakingapp";
-    public static String POSITION_STR = "position_id";
     public static String STEP_ID_POSITION_STR = "step_id";
     public static String LAST_PLAYER_POSITION_STR = "lastPlayerPosition";
     public static String RECIPE_ID_STR = "recipe_id";
     public static SharedPreferences sharedPreferences = null;
 
-    public static int current_step_id_position = 0;
+    public static long restored_lastPlayerPosition = 0;
+    private int restored_recipe_id = 0;
+    public static int current_step_id_position = -1;
+    private int current_orientation;
 
     public void handleFragments() {
-        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
 
-        // create list fragment instance
-        Bundle bundle = new Bundle();
-        //Log.e("RecipeDetail", "Setting Recipe index:" + Integer.toString(recipeInfo.id));
+        Log.e("RecipeDetail", "handleFragments called");
 
-        bundle.putInt(MainActivity.RECIPE_INDEX_STR, recipeInfo.id);
-        recipeListFragment = new RecipeListFragment();
-        recipeListFragment.setArguments(bundle);
-
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragmentContainer, recipeListFragment);
-
-        Log.e("RecipeDetail", "!!!!!---Mode:" + getResources().getInteger(R.integer.size));
+        createRecipeListFragment();
 
         // check if detail fragment needs to be intialized
         if (getResources().getInteger(R.integer.size) == 2) {
-            bundle = new Bundle();
-            bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
-            bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, 0);
-            long lastPlayerPosition = 0;
-            if (StepDetailFragment.mExoPlayer != null) {
-                lastPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
-            }
-            bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
-            Log.e("lastPlayerPosition", "handleFragment lastPlayerPosition:" + lastPlayerPosition);
-
-            stepDetailFragment = new StepDetailFragment();
-            stepDetailFragment.setArguments(bundle);
-            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment);
-            Log.e("RecipeDetail", "StepDetailFragment Trgigered:");
+            Log.e("RecipeDetail", "calling createRecipeStepDetailFragment: Tablet mode");
+            createRecipeStepDetailFragment();
         }
 
-        fragmentTransaction.commit();
-
-        int step_id_position = get_position();
-        Log.e("RecipeDetail", "onCreate: Got StepID Position!!:"+step_id_position + " Size:" + recipeInfo.steps.size());
-
-        if (step_id_position != -1) {
-            if ((step_id_position - 1) <= recipeInfo.steps.size()) {
+        if (current_step_id_position > 0) {
+            if (current_step_id_position <= recipeInfo.steps.size()) {
                 Log.e("RecipeDetail", "Triggering onItemClick:");
-                //onItemClick(null, recipeInfo, step_id_position, lastPlayerPosition);
+                onItemClick(null, recipeInfo, current_step_id_position, restored_lastPlayerPosition);
             } else {
                 Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
             }
         }
-
-        current_step_id_position = -1;
-        store_position();
     }
 
     @Override
@@ -98,53 +72,91 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_detail);
 
-        int orientation_state = getResources().getConfiguration().orientation;
-        Log.e("Sequence","onCreate Called!!!");
-
-//        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE){
-//            Log.e("onConfigurationChanged","Landscape !!!");
-//            c =
-//        }
-//        else {
-//            Log.e("onConfigurationChanged","Portrait !!!");
-//        }
+        Log.e("RecipeDetail","onCreate Called!!!");
 
         // Get the Intent that started this activity and extract the string
         Intent intent = getIntent();
-        int recipe_id = intent.getIntExtra(MainActivity.RECIPE_INDEX_STR, -1);
+        int recipe_id = intent.getIntExtra(RecipeDetail.RECIPE_ID_STR, -1);
+        current_step_id_position = intent.getIntExtra(RecipeDetail.STEP_ID_POSITION_STR, -1);
 
         if (recipe_id == -1) {
             Toast.makeText(this, "Invalid Position entered", Toast.LENGTH_LONG).show();
             return;
         }
 
-        sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
+        Log.e("RecipeDetail", "Bundle Read position = " + current_step_id_position);
 
+        sharedPreferences = getSharedPreferences(SHARED_FILE, MODE_PRIVATE);
         recipeInfo = RecipeDb.recipeInfoArrayList.get((recipe_id - 1));
         setTitle(recipeInfo.name);
 
-        handleFragments();
+        current_orientation = getResources().getConfiguration().orientation;
 
-        //current_step_id_position = -1;
-        //store_position();
+        saveStateInSharedPreference(true);
+
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setContentView(R.layout.activity_recipe_detail);
+
+        Log.e("RecipeDetail", "onConfigurationChanged triggered");
+
+        if (StepDetailFragment.mExoPlayer != null) {
+            Log.e("RecipeDetail", "ExoPlayer Current Position Pulled");
+            restored_lastPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
+        }
+
+        if (newConfig.orientation != current_orientation) {
+            current_orientation = newConfig.orientation;
+
+            //killRecipeListFragment();
+            //createRecipeListFragment();
+
+//            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//                Log.e("RecipeDetail", "Landscape");
+//                // we changed orientation, remove Ingredients fragment if we are
+//                // landscape and sw600
+//                Log.e("RecipeDetail", "!!!!mode:" + getResources().getInteger(R.integer.size));
+////                if (getResources().getInteger(R.integer.size) == 2) {
+////                    // we are sw600
+////                    killRecipeListFragment();
+////                }
+//            } else {
+//                Log.e("RecipeDetail", "Portrait");
+//
+//                Log.e("RecipeDetail", "!!!!mode:" + getResources().getInteger(R.integer.size));
+//                if (getResources().getInteger(R.integer.size) == 2) {
+//                    // we are sw600
+//                    createRecipeListFragment();
+//                }
+//            }
+
+            // kill and restart fragments
+
+            onItemClick(null, recipeInfo, current_step_id_position, restored_lastPlayerPosition);
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        //outState.putParcelable("DETAIL_ACTIVITY_SAVED_LAYOUT_MANAGER", getLayoutManager().onSaveInstanceState());
     }
 
     public void prevClick(View view) {
-        Log.e("Amit", "Previous clicked");
-        if (current_step_id_position > 1) {
+        Log.e("RecipeDetail", "Previous clicked");
+        if (current_step_id_position > 2) {
             current_step_id_position--;
+        } else {
+            // nothing to do
+            return;
         }
 
         stepDetailFragment.lastPlayerPosition = 0;
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
-        // fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         // create list fragment instance
         Bundle bundle = new Bundle();
@@ -173,93 +185,38 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         fragmentTransaction.commit();
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        long currentPlayerPosition = 0;
-
-        Log.e("Sequence","onConfigurationChanged Called!!!");
-
-        int currentOrientation = getResources().getConfiguration().orientation;
-
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE){
-            Log.e("onConfigurationChanged","Landscape !!!");
-
-        }
-        else {
-            Log.e("onConfigurationChanged","Portrait !!!");
-        }
-
-        if (StepDetailFragment.mExoPlayer != null) {
-            Log.e("lastPlayerPosition", "Current Position:" + Long.toString(StepDetailFragment.mExoPlayer.getCurrentPosition()));
-            currentPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
-        }
-
-        //handleFragments();
-        onItemClick(null, recipeInfo, current_step_id_position, currentPlayerPosition);
-    }
-
     public void nextClick(View view) {
         Log.e("RecipeDetail", "Next clicked:" + recipeInfo.name);
-        if ((current_step_id_position + 1) < recipeInfo.steps.size()) {
+
+        Log.e("RecipeDetail", "Current current_step_id_position:" + current_step_id_position);
+
+        if ((current_step_id_position + 1) <= recipeInfo.steps.size()) {
             current_step_id_position++;
-        }
-
-        StepDetailFragment.lastPlayerPosition = 0;
-
-        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
-        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-
-        // remove existing one
-        if (stepDetailFragment != null) {
-            FragmentTransaction trans = fragmentManager.beginTransaction();
-            //trans.remove(stepDetailFragment);
-            Log.e("RecipeDetail", "REMOVE OLD FRAGMENT!!");
-            trans.commitAllowingStateLoss();
-        }
-
-        // create list fragment instance
-        Bundle bundle = new Bundle();
-
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
-        bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
-        Log.e("RecipeDetail", "Next Clicked:-->New Step ID: " + current_step_id_position);
-
-        long lastPlayerPosition = 0;
-        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
-        Log.e("lastPlayerPosition", "nextClick lastPlayerPosition:" + lastPlayerPosition);
-
-        stepDetailFragment = new StepDetailFragment();
-        stepDetailFragment.setArguments(bundle);
-
-        // check if detail fragment needs to be intialized
-        if (getResources().getInteger(R.integer.size) == 2) {
-            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
         } else {
-            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
+            // nothing to do
+            return;
         }
 
-        fragmentTransaction.commit();
+       // FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+        //fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        killStepDetailFragment();
+
+        // reset lastPlayerPosition
+        restored_lastPlayerPosition = 0;
+
+        createRecipeListFragment();
+
+        createRecipeStepDetailFragment();
     }
 
-    public static void store_position() {
-        // store current recipe ID in shared preference and then update widget
-        if (sharedPreferences != null) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putInt(RecipeDetail.POSITION_STR, current_step_id_position);
-            Log.e("RecipeDetail", "Storing Position:" + current_step_id_position);
-            editor.apply();
-        }
-    }
-
-    public int get_position() {
-        // store current recipe ID in shared preference and then update widget
-        SharedPreferences sharedPreferences = getSharedPreferences(RecipeDetail.SHARED_FILE, MODE_PRIVATE);
-        int position = sharedPreferences.getInt(RecipeDetail.POSITION_STR, -1);
-        Log.e("RecipeDetail", "Retriving Position:" + position);
-        return position;
+    public void prepareRecipeDetailBundle(Bundle bundle) {
+        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+        Log.e("RecipeDetail", "Setting Recipe ID: " + recipeInfo.id);
+        bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
+        Log.e("RecipeDetail", "Setting Step ID POSITION: " + current_step_id_position);
+        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, restored_lastPlayerPosition);
+        Log.e("RecipeDetail", "Setting lastPlayerPosition:" + restored_lastPlayerPosition);
     }
 
     @Override
@@ -271,44 +228,14 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
 
         //create fragment instance
-        Bundle bundle = new Bundle();
         if (position == 0) {
-            bundle.putInt(MainActivity.RECIPE_INDEX_STR, recipeInfo.id);
-
-            ingredientFragment = new IngredientFragment();
-            ingredientFragment.setArguments(bundle);
-
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            if (getResources().getInteger(R.integer.size) == 1) {
-                fragmentTransaction.replace(R.id.fragmentContainer, ingredientFragment).addToBackStack(null);
-            } else {
-                fragmentTransaction.replace(R.id.fragmentContainer1, ingredientFragment).addToBackStack(null);
-            }
-            fragmentTransaction.commit();
+            createIngredientFragment();
             return;
         } else {
             current_step_id_position = position;
-
-            bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
-            bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, position);
-            Log.e("RecipeDetail", "Setting Step ID POSITION: " + position);
-            bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
-            Log.e("lastPlayerPosition", "onItemClick lastPlayerPosition:" + lastPlayerPosition);
+            createRecipeListFragment();
+            createRecipeStepDetailFragment();
         }
-
-        stepDetailFragment = new StepDetailFragment();
-        stepDetailFragment.setArguments(bundle);
-
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-        // check if detail fragment needs to be intialized
-        if (getResources().getInteger(R.integer.size) == 2) {
-            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
-        } else {
-            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
-        }
-
-        fragmentTransaction.commit();
     }
 
     @Override
@@ -340,7 +267,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
                 editor.putString(MainActivity.RECIPE_INGREDIENT_STR, json);
                 editor.apply();
 
-                Log.e("RecipeWidgetFactory", "!!Trigger Updating Widgets:");
+                Log.e("RecipeDetail", "!!Trigger Updating Widgets:");
 
                 // trigger widget to refresh
                 updateWidgets();
@@ -357,10 +284,202 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.list_view);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //Log.e("RecipeDetail", "!!onDestroy: Trigger Storing  Step Position:");
-        //store_position(current_step_id_position);
+    private void saveStateInSharedPreference(boolean defaults) {
+        Log.e("RecipeDetailFragment", "saveStateInSharedPreference Called");
+
+        if (sharedPreferences != null) {
+            if (defaults == true) {
+                Log.e("RecipeDetail", "Saving DEFAULT State in Shared Memory");
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
+                editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+                editor.putInt(RecipeDetail.RECIPE_ID_STR, -1);
+                editor.apply();
+            } else {
+                Log.e("RecipeDetail", "Saving Current State in Shared Memory");
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
+                editor.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+                if (StepDetailFragment.mExoPlayer != null) {
+                    Log.e("RecipeDetail", "ExoPlayer Current Position Saved");
+                    editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, StepDetailFragment.mExoPlayer.getCurrentPosition());
+                }
+                editor.apply();
+            }
+        }
     }
+
+    private void getStateFromSharedPreference() {
+        Log.e("RecipeDetail", "getStateFromSharedPreference Called");
+
+        if (sharedPreferences != null) {
+            if (current_step_id_position < 1) {
+                current_step_id_position = sharedPreferences.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
+            }
+            restored_lastPlayerPosition = sharedPreferences.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+            restored_recipe_id = sharedPreferences.getInt(RecipeDetail.RECIPE_ID_STR, 0);
+            Log.e("RecipeDetail", "Read Shared Preference: recipe id: " + restored_recipe_id +
+                    ":lastPlayer:" + restored_lastPlayerPosition + ":stepid:" + current_step_id_position);
+        }
+    }
+
+    private void killStepDetailFragment() {
+        if (stepDetailFragment != null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+            Log.e("RecipeDetail", "Killing Fragment RecipeListFragment");
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(stepDetailFragment);
+            fragmentTransaction.commit();
+            stepDetailFragment = null;
+        }
+    }
+
+    private void killRecipeListFragment() {
+        if (recipeListFragment != null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+            Log.e("RecipeDetail", "Killing Fragment RecipeListFragment");
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(recipeListFragment);
+            fragmentTransaction.commit();
+            recipeListFragment = null;
+        }
+    }
+
+    private void killIngredientFragment() {
+        if (ingredientFragment != null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+            Log.e("RecipeDetail", "Killing Fragment IngredientFragment");
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(ingredientFragment);
+            fragmentTransaction.commit();
+            ingredientFragment = null;
+        } else {
+            Log.e("RecipeDetail", "ingredientFragment is NULL");
+        }
+    }
+
+    private void createRecipeStepDetailFragment() {
+        Log.e("RecipeDetail", "Calling createRecipeStepDetailFragment");
+
+        if (current_step_id_position < 1) {
+            Log.e("RecipeDetail", "Cannot create createRecipeStepDetailFragment:" + current_step_id_position);
+            return;
+        }
+
+        Bundle bundle = new Bundle();
+        prepareRecipeDetailBundle(bundle);
+
+        stepDetailFragment = new StepDetailFragment();
+        stepDetailFragment.setArguments(bundle);
+
+        // check if detail fragment needs to be intialized
+//        if (current_orientation == Configuration.ORIENTATION_LANDSCAPE && ) {
+//            Log.e("RecipeDetail", "Landscape");
+//            // we changed orientation, remove Ingredients fragment if we are
+//            // landscape and sw600
+//            Log.e("RecipeDetail", "!!!!mode:" + getResources().getInteger(R.integer.size));
+//            if (getResources().getInteger(R.integer.size) == 2) {
+//                // we are sw600
+//                killRecipeListFragment();
+//            }
+//        }
+
+        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        if (current_orientation == Configuration.ORIENTATION_LANDSCAPE && getResources().getInteger(R.integer.size) == 2) {
+                // tablet landscape
+            Log.e("RecipeDetail", "tablet landscape mode");
+
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
+        } else if (current_orientation == Configuration.ORIENTATION_PORTRAIT && getResources().getInteger(R.integer.size) == 2) {
+            // tablet portrait
+            fragmentTransaction.replace(R.id.fragmentContainer1, stepDetailFragment).addToBackStack(null);
+        } else {
+            // Regular portrait/Landscape
+            fragmentTransaction.replace(R.id.fragmentContainer, stepDetailFragment).addToBackStack(null);
+        }
+
+        fragmentTransaction.commit();
+    }
+
+    private void createIngredientFragment() {
+        Log.e("RecipeDetail", "Calling createIngredientFragment");
+        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+
+        ingredientFragment = new IngredientFragment();
+        ingredientFragment.setArguments(bundle);
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        if (getResources().getInteger(R.integer.size) == 1) {
+            fragmentTransaction.replace(R.id.fragmentContainer, ingredientFragment).addToBackStack(null);
+        } else {
+            fragmentTransaction.replace(R.id.fragmentContainer1, ingredientFragment).addToBackStack(null);
+        }
+        fragmentTransaction.commit();
+    }
+
+    private void createRecipeListFragment() {
+        Log.e("RecipeDetail", "Calling createRecipeListFragment");
+
+        // create list fragment instance
+        Bundle bundle = new Bundle();
+        bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
+        recipeListFragment = new RecipeListFragment();
+        recipeListFragment.setArguments(bundle);
+
+        FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
+
+        if (current_orientation == Configuration.ORIENTATION_LANDSCAPE && getResources().getInteger(R.integer.size) == 2) {
+            // tablet landscape
+            // we dont create list fragment in this mode
+            Log.e("RecipeDetail", "Tablet Landscape mode");
+            return;
+        }
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        if (current_orientation == Configuration.ORIENTATION_PORTRAIT && getResources().getInteger(R.integer.size) == 2) {
+            // tablet portrait
+            Log.e("RecipeDetail", "Tablet Portrait mode");
+            fragmentTransaction.replace(R.id.fragmentContainer, recipeListFragment).addToBackStack(null);
+        } else {
+            // Regular portrait/Landscape
+            Log.e("RecipeDetail", "Regular Portrait/Landscape mode");
+            fragmentTransaction.replace(R.id.fragmentContainer, recipeListFragment).addToBackStack(null);
+        }
+
+        fragmentTransaction.commit();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.e("RecipeDetail", "onPause called");
+
+        // save shared preference
+        saveStateInSharedPreference(false);
+
+        // Kill fragments and release player
+        killStepDetailFragment();
+
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.e("RecipeDetail", "onResume called");
+
+        super.onResume();
+
+//        getStateFromSharedPreference();
+
+        handleFragments();
+
+        saveStateInSharedPreference(true);
+    }
+
+
 }
