@@ -459,7 +459,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     protected void onPause() {
         Log.e("RecipeDetail", "onPause called");
 
-        // save shared preference
+        // save current state shared preference
         saveStateInSharedPreference(false);
 
         // Kill fragments and release player
@@ -474,12 +474,19 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         super.onResume();
 
-//        getStateFromSharedPreference();
+        // restore any last state we have
+        getStateFromSharedPreference();
 
         handleFragments();
 
         saveStateInSharedPreference(true);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
+        // when app is destroyed, clear cache
+        saveStateInSharedPreference(true);
+    }
 }
