@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements CustomGridItemCli
     }
 
     @Override
-    public void onItemClick(View view, RecipeInfo recipeInfo, int position, long lastPlayerPosition) {
+    public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
         // start recipe detail activity
         Intent intent = new Intent(this, RecipeDetail.class);
         intent.putExtra(RecipeDetail.RECIPE_ID_STR, recipeInfo.id); //Optional parameters

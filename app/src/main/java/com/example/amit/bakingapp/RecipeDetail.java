@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -37,10 +38,11 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
     public static String SHARED_FILE = "com.example.amit.bakingapp";
     public static String STEP_ID_POSITION_STR = "step_id";
     public static String LAST_PLAYER_POSITION_STR = "lastPlayerPosition";
+    public static String LAST_PLAYER_STATE_STR = "lastPlayerState";
     public static String RECIPE_ID_STR = "recipe_id";
     public static SharedPreferences sharedPreferences = null;
-
     public static long restored_lastPlayerPosition = 0;
+    public static boolean restored_lastPlayerState = true;
     private int restored_recipe_id = 0;
     public static int current_step_id_position = -1;
     private int current_orientation;
@@ -60,7 +62,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         if (current_step_id_position > 0) {
             if (current_step_id_position <= recipeInfo.steps.size()) {
                 Log.e("RecipeDetail", "Triggering onItemClick:");
-                onItemClick(null, recipeInfo, current_step_id_position, restored_lastPlayerPosition);
+                onItemClick(null, recipeInfo, current_step_id_position);
             } else {
                 Log.e("RecipeDetail", "NO Triggering FOR onItemClick:");
             }
@@ -106,6 +108,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         if (StepDetailFragment.mExoPlayer != null) {
             Log.e("RecipeDetail", "ExoPlayer Current Position Pulled");
             restored_lastPlayerPosition = StepDetailFragment.mExoPlayer.getCurrentPosition();
+            restored_lastPlayerState = StepDetailFragment.mExoPlayer.getPlayWhenReady();
         }
 
         if (newConfig.orientation != current_orientation) {
@@ -135,7 +138,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
             // kill and restart fragments
 
-            onItemClick(null, recipeInfo, current_step_id_position, restored_lastPlayerPosition);
+            onItemClick(null, recipeInfo, current_step_id_position);
         }
     }
 
@@ -154,6 +157,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         }
 
         stepDetailFragment.lastPlayerPosition = 0;
+        stepDetailFragment.lastPlayerState = true;
 
         FragmentManager fragmentManager = getSupportFragmentManager();//Get Fragment Manager
         fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -166,9 +170,9 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         bundle.putInt(RecipeDetail.RECIPE_ID_STR, recipeInfo.id);
         bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
 
-        long lastPlayerPosition = 0;
-        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
-        Log.e("lastPlayerPosition", "prevClick lastPlayerPosition:" + lastPlayerPosition);
+        bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+        bundle.putInt(RecipeDetail.LAST_PLAYER_STATE_STR, ExoPlayer.STATE_READY);
+        Log.e("RecipeDetail", "prevClick lastPlayerPosition:0");
 
         Log.e("RecipeDetail", "Setting New Step ID: " + current_step_id_position);
 
@@ -204,6 +208,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
 
         // reset lastPlayerPosition
         restored_lastPlayerPosition = 0;
+        restored_lastPlayerState = true;
 
         createRecipeListFragment();
 
@@ -216,11 +221,12 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
         bundle.putInt(RecipeDetail.STEP_ID_POSITION_STR, current_step_id_position);
         Log.e("RecipeDetail", "Setting Step ID POSITION: " + current_step_id_position);
         bundle.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, restored_lastPlayerPosition);
+        bundle.putBoolean(RecipeDetail.LAST_PLAYER_STATE_STR, restored_lastPlayerState);
         Log.e("RecipeDetail", "Setting lastPlayerPosition:" + restored_lastPlayerPosition);
     }
 
     @Override
-    public void onItemClick(View view, RecipeInfo recipeInfo, int position, long lastPlayerPosition) {
+    public void onItemClick(View view, RecipeInfo recipeInfo, int position) {
 
         Log.e("RecipeDetail", "onItemClick called!!:" + position);
 
@@ -317,6 +323,7 @@ public class RecipeDetail extends AppCompatActivity implements CustomGridItemCli
                 current_step_id_position = sharedPreferences.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
             }
             restored_lastPlayerPosition = sharedPreferences.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+            restored_lastPlayerState = sharedPreferences.getBoolean(RecipeDetail.LAST_PLAYER_STATE_STR, true);
             restored_recipe_id = sharedPreferences.getInt(RecipeDetail.RECIPE_ID_STR, 0);
             Log.e("RecipeDetail", "Read Shared Preference: recipe id: " + restored_recipe_id +
                     ":lastPlayer:" + restored_lastPlayerPosition + ":stepid:" + current_step_id_position);

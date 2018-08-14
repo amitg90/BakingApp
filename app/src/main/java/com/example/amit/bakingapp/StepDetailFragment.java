@@ -15,13 +15,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -41,6 +46,7 @@ public class StepDetailFragment extends Fragment {
     Steps step;
     Context context = null;
     public static long lastPlayerPosition = 0;
+    public static boolean lastPlayerState = true;
     public int step_id_position = -1;
 
     /**
@@ -66,8 +72,9 @@ public class StepDetailFragment extends Fragment {
                 context, userAgent), new DefaultExtractorsFactory(), null, null);
         mExoPlayer.prepare(mediaSource);
         mExoPlayer.seekTo(lastPlayerPosition);
-        Log.e("StepDetailFragment", "Last Position:" + lastPlayerPosition);
-        mExoPlayer.setPlayWhenReady(true);
+        Log.e("StepDetailFragment", "Last Position:" + lastPlayerPosition + "lastPlayerState:" + lastPlayerState);
+        mExoPlayer.setPlayWhenReady(lastPlayerState);
+        Log.e("StepDetailFragment", "!!!!After SET New  State:" + mExoPlayer.getPlayWhenReady());
     }
 
     @Nullable
@@ -104,6 +111,7 @@ public class StepDetailFragment extends Fragment {
         recipe_id = bundle.getInt(RecipeDetail.RECIPE_ID_STR, -1);
         step_id_position = bundle.getInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
         lastPlayerPosition = bundle.getLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
+        lastPlayerState = bundle.getBoolean(RecipeDetail.LAST_PLAYER_STATE_STR);
     }
 
     @Override
@@ -183,26 +191,6 @@ public class StepDetailFragment extends Fragment {
        // saveFragmentInfoInSharedMemory(true);
     }
 
-//    public void saveFragmentInfoInSharedMemory(boolean defaults) {
-//        if (sharedPreferences != null) {
-//            if (defaults == true) {
-//                Log.e("StepDetailFragment", "Saving DEFAULT State in Shared Memory");
-//                SharedPreferences.Editor editor = sharedPreferences.edit();
-//                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, -1);
-//                editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, 0);
-//                editor.putInt(RecipeDetail.RECIPE_ID_STR, -1);
-//                editor.apply();
-//            } else {
-//                Log.e("StepDetailFragment", "Saving Current State in Shared Memory");
-//                SharedPreferences.Editor editor = sharedPreferences.edit();
-//                editor.putInt(RecipeDetail.STEP_ID_POSITION_STR, (step_id_position + 1));
-//                editor.putLong(RecipeDetail.LAST_PLAYER_POSITION_STR, lastPlayerPosition);
-//                editor.putInt(RecipeDetail.RECIPE_ID_STR, recipe_id);
-//                editor.apply();
-//            }
-//        }
-//    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -221,6 +209,8 @@ public class StepDetailFragment extends Fragment {
         if (mExoPlayer != null) {
             Log.e("StepDetailFragment", "RELEASING PLAYER");
             lastPlayerPosition = mExoPlayer.getCurrentPosition();
+            lastPlayerState = mExoPlayer.getPlayWhenReady();
+            Log.e("StepDetailFragment", "ExoPlayer returned last Player State:" + lastPlayerState);
             mExoPlayer.stop();
             mExoPlayer.release();
             mExoPlayer = null;
